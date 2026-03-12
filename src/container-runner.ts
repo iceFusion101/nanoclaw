@@ -7,6 +7,8 @@ import fs from 'fs';
 import path from 'path';
 
 import {
+  COMPOSIO_API_KEY,
+  COMPOSIO_MCP_URL,
   CONTAINER_IMAGE,
   CONTAINER_MAX_OUTPUT_SIZE,
   CONTAINER_TIMEOUT,
@@ -78,8 +80,11 @@ function buildVolumeMounts(
 
     // Shadow .env so the agent cannot read secrets from the mounted project root.
     // Credentials are injected by the credential proxy, never exposed to containers.
+    // Apple Container doesn't support file-level bind mounts (only directories),
+    // so the entrypoint.sh handles .env shadowing via mount --bind inside the container.
+    // Docker supports file mounts, so we add the /dev/null overlay here.
     const envFile = path.join(projectRoot, '.env');
-    if (fs.existsSync(envFile)) {
+    if (fs.existsSync(envFile) && CONTAINER_RUNTIME_BIN !== 'container') {
       mounts.push({
         hostPath: '/dev/null',
         containerPath: '/workspace/project/.env',
@@ -237,6 +242,14 @@ function buildContainerArgs(
     args.push('-e', 'ANTHROPIC_API_KEY=placeholder');
   } else {
     args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
+  }
+
+  // Composio MCP (hosted MCP server)
+  if (COMPOSIO_MCP_URL) {
+    args.push('-e', `COMPOSIO_MCP_URL=${COMPOSIO_MCP_URL}`);
+  }
+  if (COMPOSIO_API_KEY) {
+    args.push('-e', `COMPOSIO_API_KEY=${COMPOSIO_API_KEY}`);
   }
 
   // Runtime-specific args for host gateway resolution
