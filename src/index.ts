@@ -10,6 +10,7 @@ import {
   IDLE_TIMEOUT,
   POLL_INTERVAL,
   TIMEZONE,
+  TRIGGER_PATTERN,
 } from './config.js';
 import { startCredentialProxy } from './credential-proxy.js';
 import './channels/index.js';
