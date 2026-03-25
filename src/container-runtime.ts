@@ -3,7 +3,6 @@
  * All runtime-specific logic lives here so swapping runtimes means changing one file.
  */
 import { execSync } from 'child_process';
-import fs from 'fs';
 import os from 'os';
 
 import { logger } from './logger.js';
@@ -49,6 +48,7 @@ function detectProxyBindHost(): string {
   }
   return '0.0.0.0';
 }
+
 
 /** CLI args needed for the container to resolve the host gateway. */
 export function hostGatewayArgs(): string[] {

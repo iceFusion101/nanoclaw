@@ -2,6 +2,7 @@ import os from 'os';
 import path from 'path';
 
 import { readEnvFile } from './env.js';
+import { isValidTimezone } from './timezone.js';
 
 // Read config values from .env (falls back to process.env).
 // Secrets (API keys, tokens) are NOT read here — they are loaded only
@@ -12,6 +13,7 @@ const envConfig = readEnvFile([
   'TELEGRAM_BOT_POOL',
   'COMPOSIO_MCP_URL',
   'COMPOSIO_API_KEY',
+  'TZ',
 ]);
 
 export const ASSISTANT_NAME =
@@ -89,7 +91,17 @@ export const COMPOSIO_MCP_URL =
 export const COMPOSIO_API_KEY =
   process.env.COMPOSIO_API_KEY || envConfig.COMPOSIO_API_KEY || '';
 
-// Timezone for scheduled tasks (cron expressions, etc.)
-// Uses system timezone by default
-export const TIMEZONE =
-  process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
+// Timezone for scheduled tasks, message formatting, etc.
+// Validates each candidate is a real IANA identifier before accepting.
+function resolveConfigTimezone(): string {
+  const candidates = [
+    process.env.TZ,
+    envConfig.TZ,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ];
+  for (const tz of candidates) {
+    if (tz && isValidTimezone(tz)) return tz;
+  }
+  return 'UTC';
+}
+export const TIMEZONE = resolveConfigTimezone();
